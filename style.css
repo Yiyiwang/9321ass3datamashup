@@ -1,0 +1,36 @@
+body,h1,h2,h3,h4,h5,h6 {font-family: "Lato", sans-serif;}
+
+body, html {
+    height: 100%;
+    color: #777;
+    line-height: 1.8;
+}
+
+/* Create a Parallax Effect */
+ .bgimg-1{
+     background-attachment: fixed;
+     background-position: center;
+     background-repeat: no-repeat;
+     background-size: cover;
+ }
+
+/* First image (Logo. Full height) */
+.bgimg-1 {
+    background-image: url('https://27ldk4j1esh2tto962ds2vk1-wpengine.netdna-ssl.com/wp-content/uploads/Matterhorn.jpg');
+    min-height: 100%;
+}
+
+.w3-wide {letter-spacing: 10px;}
+.w3-hover-opacity {cursor: pointer;}
+
+div.listitem {
+    padding: .5em .5em;
+    margin: 0;
+    border-radius: .5em;
+    display: list-item;
+    table-layout: fixed;
+    list-style-type: none;
+    list-style-position: outside;
+    box-sizing: inherit;
+    font-size: 1em;
+}
