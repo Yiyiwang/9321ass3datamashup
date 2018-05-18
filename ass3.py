@@ -10,8 +10,10 @@ country_code = {}
 
 def read_file():
     workbook = xlrd.open_workbook(resdir + "/Country-Code.xlsx")
+
     if len(workbook.sheet_names()) < 1:
         return
+
     sheet1 = workbook.sheets()[0]
     num_rows = sheet1.nrows
     for i in range(1,num_rows):
@@ -43,10 +45,10 @@ def get_data_by_location():
         return jsonify("ok"), 200
 
     with open(resdir + "/zomato.csv") as f1:
-         fi_csv = csv.DictReader(f1)
-         for each_row in fi_csv:
-             if each_row['Country Code'] == loca_code:
-                 print(each_row)
+        fi_csv = csv.DictReader(f1)
+        for each_row in fi_csv:
+            if each_row['Country Code'] == loca_code:
+                print(each_row)
 
     return jsonify("ok"), 200
 
