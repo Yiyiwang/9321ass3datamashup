@@ -87,13 +87,17 @@ def get_data_by_location():
     if loca_code == 0:
         return jsonify(return_list), 200
     #open zomato dataset and processing data
-    with open(resdir + zomato_fname) as f1:
-        fi_csv = csv.DictReader(f1)
-        for each_row in fi_csv:
-            if each_row['Country Code'] == loca_code:
-                return_list.append(row)
+    try:
+        with open(resdir + zomato_fname, 'r',encoding='ISO-8859-1') as f1:
+            fi_csv = csv.DictReader(f1)
+            for row in fi_csv:
+                #print(loca_code,row['Country Code'])
+                if int(row['Country Code']) == loca_code:
+                    return_list.append(row)
 
-    return jsonify(return_list), 200
+        return jsonify(return_list), 200
+    except IOError:
+        pass
 
 if __name__ == '__main__':
     read_file()
