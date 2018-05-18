@@ -21,12 +21,17 @@ country_code = {}
 
 def read_file():
     def download_resources():
+        # move kaggle api key to its appropriate location
+        # or else kaggle won't work
         kaggledir = str(Path.home()) + "/.kaggle/"
         if not exists(kaggledir):
             makedirs(kaggledir)
         copyfile(resdir + "kaggle.json", kaggledir + "kaggle.json")
+
+        # download any missing dataset
         for i, fname in enumerate([countrycode_fname, zomato_fname, tripadvisor_fname]):
             if not isfile(resdir + fname):
+                # download datasets
                 if i < 2:
                     kaggle_user = "shrutimehta/zomato-restaurants-data"
                 else:
@@ -37,6 +42,8 @@ def read_file():
                           "-f", fname], shell=False)
                 except OSError:
                     continue
+
+                # move and unzip datasets
                 fname_new = fname if i < 1 else fname + ".zip"
                 copyfile(kaggledir + "datasets/" + kaggle_user + "/" + fname_new,\
                          resdir + fname_new)
@@ -51,11 +58,9 @@ def read_file():
                         remove(resdir + delete)
 
     download_resources()
-    workbook = open_workbook(resdir + "Country-Code.xlsx")
-
+    workbook = open_workbook(resdir + countrycode_fname)
     if len(workbook.sheet_names()) < 1:
         return
-
     sheet1 = workbook.sheets()[0]
     num_rows = sheet1.nrows
     for i in range(1,num_rows):
@@ -76,10 +81,8 @@ def get_data_by_location():
         for row in f_csv :
             if row['Country'] == location:
                 print(row)
-
     if loca_code is None:
         return jsonify("ok"), 200
-
     with open(resdir + zomato_fname) as f1:
         fi_csv = csv.DictReader(f1)
         for each_row in fi_csv:
