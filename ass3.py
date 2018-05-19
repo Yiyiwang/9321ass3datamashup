@@ -142,6 +142,8 @@ def get_zomato_rest_by_loc(city):
             for rest in res2["restaurants"]:
                 d.append(rest)
 
+    return dumps(d), 200
+
 @app.route("/api/location", methods=['Get'])
 def get_data_by_location():
     parser = reqparse.RequestParser()
