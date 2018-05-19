@@ -80,30 +80,86 @@ def get_zomato_key():
 
     return data['user-key']
 
+def get_search_result_params(l):
+    d = {}
+
+    start = 0
+    if 'start' in l:
+        try:
+            start = int(l.get('start'))
+        except ValueError:
+            pass # do nothing, assume default value
+    count = 20
+    if 'count' in l:
+        try:
+            count = int(l.get('count'))
+        except ValueError:
+            pass # do nothing, assume default value
+    pages = 1
+    if 'pages' in l:
+        try:
+            pages = int(l.get('pages'))
+        except ValueError:
+            pass # do nothing, assume default value
+
+    d['start'] = start
+    d['count'] = count
+    d['pages'] = pages
+
+    return d
+
+@app.route("/restaurants/<string:lat>/<string:lon>", methods=['Get'])
+def get_zomato_rests_by_lat_and_lon(lat, lon):
+    try:
+        lat = float(lat)
+    except ValueError:
+        return dumps({"message" : "invalid latitude"}), 400
+    try:
+        lon = float(lon)
+    except ValueError:
+        return dumps({"message" : "invalid longitude"}), 400
+    d = get_search_result_params(request.args)
+    start = d['start']
+    count = d['count']
+    pages = d['pages']
+    radius = 500 # in metres
+    if 'radius' in request.args:
+        try:
+            radius = float(request.args.get('radius'))
+        except ValueError:
+            pass # do nothing, assume default value
+    headers = {
+        "Content-Type" : "application/json",
+        "user-key" : get_zomato_key()
+    }
+
+    d = OrderedDict()
+    d["results_found"] = 0
+    d["restaurants"] = []
+    for i in range(pages):
+        url = zomato_api_baseurl + "search?lat=" + str(lat) + "&lon=" + str(lon) +\
+                "&radius=" + str(radius) + "&start=" + str(start + i * count) +\
+                "&count=" + str(count)
+        req = get(url, headers=headers)
+        res = loads(req.content)
+        print(url)
+
+        d["results_found"] += len(res["restaurants"])
+        for rest in res["restaurants"]:
+            d["restaurants"].append(rest)
+
+    return dumps(d), 200
+
 @app.route("/restaurants/<string:city>", methods=['Get'])
-def get_zomato_rest_by_loc(city):
+def get_zomato_rests_by_city(city):
     if not city:
         return dumps({"message" : "empty city name"}), 400
 
     city = city.strip().lower()
-    start = 0
-    if 'start' in request.args:
-        try:
-            start = int(request.args.get('start'))
-        except ValueError:
-            pass # do nothing, assume default value
-    count = 20
-    if 'count' in request.args:
-        try:
-            count = int(request.args.get('count'))
-        except ValueError:
-            pass # do nothing, assume default value
-    pages = 1
-    if 'pages' in request.args:
-        try:
-            pages = int(request.args.get('pages'))
-        except ValueError:
-            pass # do nothing, assume default value
+    d = get_search_result_params(request.args)
+    start = d['start']
+    count = d['count']
+    pages = d['pages']
     headers = {
         "Content-Type" : "application/json",
         "user-key" : get_zomato_key()
