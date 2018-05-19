@@ -101,12 +101,26 @@ def get_search_result_params(l):
             pages = int(l.get('pages'))
         except ValueError:
             pass # do nothing, assume default value
+    if "cuisines" in l:
+        cuisines = list(set([c.strip()\
+                for c in l.get("cuisines").strip().lower().split(",")]))
+        d["cuisines"] = cuisines
 
     d['start'] = start
     d['count'] = count
     d['pages'] = pages
 
     return d
+
+def cuisine_names_to_ids(l_user, l_zomato):
+    l = []
+    for c in l_user:
+        for c1 in l_zomato:
+            if c == c1["cuisine"]["cuisine_name"].strip().lower():
+                l.append(int(c1["cuisine"]["cuisine_id"]))
+    l = map(str, l)
+
+    return ",".join(l)
 
 @app.route("/restaurants/<string:lat>/<string:lon>", methods=['Get'])
 def get_zomato_rests_by_lat_and_lon(lat, lon):
@@ -133,16 +147,20 @@ def get_zomato_rests_by_lat_and_lon(lat, lon):
         "user-key" : get_zomato_key()
     }
 
+    url = zomato_api_baseurl + "cuisines?lat=" + str(lat) + "&lon=" + str(lon)
+    req = get(url, headers=headers)
+    res = loads(req.content)
+    l_cuisines = cuisine_names_to_ids(d["cuisines"], res["cuisines"])\
+            if "cuisines" in d.keys() else ""
     d = OrderedDict()
     d["results_found"] = 0
     d["restaurants"] = []
     for i in range(pages):
         url = zomato_api_baseurl + "search?lat=" + str(lat) + "&lon=" + str(lon) +\
                 "&radius=" + str(radius) + "&start=" + str(start + i * count) +\
-                "&count=" + str(count)
+                "&count=" + str(count) + ("&cuisines=" + l_cuisines if l_cuisines else "")
         req = get(url, headers=headers)
         res = loads(req.content)
-        print(url)
 
         d["results_found"] += len(res["restaurants"])
         for rest in res["restaurants"]:
@@ -160,6 +178,7 @@ def get_zomato_rests_by_city(city):
     start = d['start']
     count = d['count']
     pages = d['pages']
+    d_cuisines = d["cuisines"] if "cuisines" in d.keys() else []
     headers = {
         "Content-Type" : "application/json",
         "user-key" : get_zomato_key()
@@ -186,15 +205,22 @@ def get_zomato_rests_by_city(city):
 
         entity_id = res1["location_suggestions"][0]["entity_id"]
         entity_type = res1["location_suggestions"][0]["entity_type"]
+        city_id = int(res1["location_suggestions"][0]["city_id"])
+        url = zomato_api_baseurl + "cuisines?city_id=" + str(city_id)
+        req = get(url, headers=headers)
+        res1 = loads(req.content)
+        l_cuisines = cuisine_names_to_ids(d_cuisines, res1["cuisines"]) if d_cuisines\
+                else ""
         for i in range(pages):
-            url1 = zomato_api_baseurl + "search?entity_id=" + str(entity_id) +\
+            url = zomato_api_baseurl + "search?entity_id=" + str(entity_id) +\
                     "&entity_type=" + entity_type +\
-                    "&start=" + str(start + i * count) + "&count=" + str(count)
-            req1 = get(url1, headers=headers)
-            res2 = loads(req1.content)
+                    "&start=" + str(start + i * count) + "&count=" + str(count) +\
+                    ("&cuisines=" + l_cuisines if l_cuisines else "")
+            req = get(url, headers=headers)
+            res1 = loads(req.content)
 
-            d["results_found"] += len(res2["restaurants"])
-            for rest in res2["restaurants"]:
+            d["results_found"] += len(res1["restaurants"])
+            for rest in res1["restaurants"]:
                 d["restaurants"].append(rest)
 
     return dumps(d), 200
