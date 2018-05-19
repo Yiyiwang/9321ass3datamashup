@@ -20,6 +20,7 @@ tripadvisor_fname = "tripadvisor_in-restaurant_sample.csv"
 zomato_fname = "zomato.csv"
 
 zomato_api_baseurl = "https://developers.zomato.com/api/v2.1/"
+googleplaces_api_baseurl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
 
 country_code = {}
 
@@ -71,12 +72,50 @@ def read_file():
         row = sheet1.row(i)
         country_code[row[1].value] = int(row[0].value)
 
+def get_googleplaces_key():
+    if not isfile(resdir + "googleplaces.json"):
+        return ""
+
+    with open(resdir + "googleplaces.json", "r") as f:
+        data = loads(f.read().replace("\n", "").strip())
+
+    return data['key']
+
+@app.route("/restaurantsg/<string:lat>/<string:lon>", methods=['Get'])
+def get_googleplaces_rests_by_lat_and_lon(lat, lon):
+    try:
+        lat = float(lat)
+    except ValueError:
+        return dumps({"message" : "invalid latitude"}), 400
+    try:
+        lon = float(lon)
+    except ValueError:
+        return dumps({"message" : "invalid longitude"}), 400
+    radius = 500 # in metres
+    if 'radius' in request.args:
+        try:
+            radius = float(request.args.get('radius'))
+        except ValueError:
+            pass # do nothing, assume default value
+    url = googleplaces_api_baseurl + "key=" + get_googleplaces_key() +\
+            "&location=" + str(lat) + "," + str(lon) + "&radius=" + str(radius) +\
+            "&types=food"
+    req = get(url)
+    res = loads(req.content)
+
+    d = OrderedDict()
+    d["results_found"] = len(res["results"]) - 1
+    d["restaurants"] = res["results"]
+    del d["restaurants"][0]
+
+    return dumps(d), 200
+
 def get_zomato_key():
     if not isfile(resdir + "zomato.json"):
         return ""
 
     with open(resdir + "zomato.json", "r") as f:
-        data = loads(f.read().replace("\n", "").strip().lower())
+        data = loads(f.read().replace("\n", "").strip())
 
     return data['user-key']
 
@@ -152,6 +191,7 @@ def get_zomato_rests_by_lat_and_lon(lat, lon):
     res = loads(req.content)
     l_cuisines = cuisine_names_to_ids(d["cuisines"], res["cuisines"])\
             if "cuisines" in d.keys() else ""
+
     d = OrderedDict()
     d["results_found"] = 0
     d["restaurants"] = []
@@ -209,8 +249,8 @@ def get_zomato_rests_by_city(city):
         url = zomato_api_baseurl + "cuisines?city_id=" + str(city_id)
         req = get(url, headers=headers)
         res1 = loads(req.content)
-        l_cuisines = cuisine_names_to_ids(d_cuisines, res1["cuisines"]) if d_cuisines\
-                else ""
+        l_cuisines = cuisine_names_to_ids(d_cuisines, res1["cuisines"])\
+                if d_cuisines else ""
         for i in range(pages):
             url = zomato_api_baseurl + "search?entity_id=" + str(entity_id) +\
                     "&entity_type=" + entity_type +\
