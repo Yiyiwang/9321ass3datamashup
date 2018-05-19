@@ -150,23 +150,31 @@ def get_data_by_location():
     parser.add_argument('location', type=str)
     args = parser.parse_args()
     location = args.get("location")
+    loca_code = 0
     if location in country_code:
         loca_code = country_code[location]
-
+    return_list=[]
+    #open trpadvisor dataset and processing data
     with open(resdir + tripadvisor_fname) as f:
         f_csv = csv.DictReader(f)
         for row in f_csv :
             if row['Country'] == location:
-                print(row)
-    if loca_code is None:
-        return jsonify("ok"), 200
-    with open(resdir + zomato_fname) as f1:
-        fi_csv = csv.DictReader(f1)
-        for each_row in fi_csv:
-            if each_row['Country Code'] == loca_code:
-                print(each_row)
+                return_list.append(row)
+    #return if there is no relate data in zomato dataset
+    if loca_code == 0:
+        return jsonify(return_list), 200
+    #open zomato dataset and processing data
+    try:
+        with open(resdir + zomato_fname, 'r',encoding='ISO-8859-1') as f1:
+            fi_csv = csv.DictReader(f1)
+            for row in fi_csv:
+                #print(loca_code,row['Country Code'])
+                if int(row['Country Code']) == loca_code:
+                    return_list.append(row)
 
-    return jsonify("ok"), 200
+        return jsonify(return_list), 200
+    except IOError:
+        pass
 
 if __name__ == '__main__':
     read_file()
