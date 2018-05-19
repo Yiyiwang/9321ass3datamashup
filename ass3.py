@@ -1,5 +1,5 @@
-from collection import OrderedDict
-from flask import jsonify, Flask
+from collections import OrderedDict
+from flask import jsonify, Flask, request
 from flask_restful import reqparse
 from json import loads, dumps
 from os import makedirs, remove
@@ -109,7 +109,7 @@ def get_zomato_rest_by_loc(city):
         "user-key" : get_zomato_key()
     }
     url = zomato_api_baseurl + "cities?q=" + city
-    req = get(url, headers)
+    req = get(url, headers=headers)
     res = loads(req.content)
 
     if len(res["location_suggestions"]) < 1:
@@ -122,7 +122,7 @@ def get_zomato_rest_by_loc(city):
         sug_id = sug["id"]
         sug_name = sug["name"]
         url = zomato_api_baseurl + "locations?query=" + sug_name
-        req = get(url, headers)
+        req = get(url, headers=headers)
         res1 = loads(req.content)
 
         if len(res1["location_suggestions"]) < 1:
@@ -130,17 +130,16 @@ def get_zomato_rest_by_loc(city):
 
         entity_id = res1["location_suggestions"][0]["entity_id"]
         entity_type = res1["location_suggestions"][0]["entity_type"]
-
         for i in range(pages):
-            url1 = zomato_api_baseurl + "search?entity_id=" + entity_id +\
+            url1 = zomato_api_baseurl + "search?entity_id=" + str(entity_id) +\
                     "&entity_type=" + entity_type +\
                     "&start=" + str(start + i * count) + "&count=" + str(count)
-            req1 = get(url1, headers)
+            req1 = get(url1, headers=headers)
             res2 = loads(req1.content)
 
             d["results_found"] += len(res2["restaurants"])
             for rest in res2["restaurants"]:
-                d.append(rest)
+                d["restaurants"].append(rest)
 
     return dumps(d), 200
 
