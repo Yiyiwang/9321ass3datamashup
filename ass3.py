@@ -82,21 +82,22 @@ def get_googleplaces_key():
 
 def googleplaces_rest_detail_extract(d_googleplaces):
     d = {}
-    d["source"] = "googleplaces"
-    take_key = ["formatted_address", "name", "place_id", "types", "url"]
-    # maybe "formatted_phone_number"
+    d["sources"] = {"source1" : {"source name" : "googleplaces"}}
     n_reviews = len(d_googleplaces["result"]["reviews"])\
             if "reviews" in d_googleplaces["result"].keys() else 0
     for key, val in d_googleplaces["result"].items():
-        if key in take_key:
+        # maybe "formatted_phone_number"
+        if key in ["formatted_address", "name", "place_id", "types", "url"]:
             if key == "formatted_address":
                 d["address"] = val
             elif key == "place_id":
-                d["id"] = val
+                d["sources"]["source1"]["id"] = val
+            elif key == "types" or key == "url":
+                d["sources"]["source1"][key] = val
             else:
                 d[key] = val
     if "rating" in d_googleplaces["result"]:
-        d["rating"] = {
+        d["sources"]["source1"]["rating"] = {
             "aggregate_rating" : int(d_googleplaces["result"]["rating"]),
             "votes" : n_reviews
         }
@@ -135,17 +136,31 @@ def get_googleplaces_rests_by_lat_and_lon(lat, lon, reqargs):
         res = loads(req.content)
         if not res["results"]:
             return {"message" : "invalid coordinate"}
-        res_num = len(res["results"]) - 1
-        d["results_found"] += res_num
-        for i in range(res_num):
-            if i == 0:
-                continue
-            url = googleplaces_api_baseurl +\
-                "details/json?key=" + get_googleplaces_key() +\
-                "&placeid=" + res["results"][i]["place_id"]
-            req = get(url)
-            res1 = loads(req.content)
-            d["restaurants"].append(googleplaces_rest_detail_extract(res1))
+        for j in range(5): # each page has 20 results and 5 pages
+            if j != 0:
+                assert next_page_token
+                url = googleplaces_api_baseurl +\
+                        "nearbysearch/json?key=" + get_googleplaces_key() +\
+                        "&pagetoken=" + next_page_token
+                req = get(url)
+                res = loads(req.content)
+                res_size = len(res["results"])
+            else:
+                res_size = len(res["results"]) - 1
+            next_page_token = res["next_page_token"]\
+                    if "next_page_token" in res.keys() else None
+            d["results_found"] += res_size
+            for i in range(res_size):
+                if j == 0 and i == 0:
+                    continue
+                url = googleplaces_api_baseurl +\
+                    "details/json?key=" + get_googleplaces_key() +\
+                    "&placeid=" + res["results"][i]["place_id"]
+                req = get(url)
+                res1 = loads(req.content)
+                d["restaurants"].append(googleplaces_rest_detail_extract(res1))
+            if not next_page_token:
+                break
 
     return d
 
@@ -173,7 +188,7 @@ def get_zomato_search_result_params(d_zomato):
             count = int(d_zomato['count'])
         except ValueError:
             pass # do nothing, assume default value
-    pages = 1
+    pages = 5
     if 'pages' in d_zomato:
         try:
             pages = int(d_zomato['pages'])
@@ -202,24 +217,27 @@ def zomato_cuisine_names_to_ids(l_user, l_zomato):
 
 def zomato_rest_detail_extract(d_zomato, country_name, state_code):
     d = {}
-    d["source"] = "zomato"
-    take_key = ["id", "name", "url", "location", "cuisines", "user_rating"]
-    # maybe "price_range"
+    d["sources"] = {"source1" : {"source name" : "zomato"}}
     for key, val in d_zomato["restaurant"].items():
-        if key in take_key:
+        if key in ["id", "name", "url", "location", "cuisines", "user_rating"]:
+            # maybe "price_range"
             if key == "user_rating":
                 val.pop("rating_text", None)
                 val.pop("rating_color", None)
-                d["rating"] = val
-                for key1, val1 in d["rating"].items():
-                    d["rating"][key1] = float(val1)
+                d["sources"]["source1"]["rating"] = val
+                for key1, val1 in d["sources"]["source1"]["rating"].items():
+                    d["sources"]["source1"]["rating"][key1] = float(val1)
                 continue
             elif key == "location":
                 d["address"] = val["address"] + " " + state_code + " " +\
                         val["zipcode"] + ", " + country_name
                 continue
             elif key == "cuisines":
-                d["types"] = [v.strip() for v in val.strip().split(",")]
+                d["sources"]["source1"]["types"] =\
+                        [v.strip() for v in val.strip().split(",")]
+                continue
+            elif key == "id" or key == "url":
+                d["sources"]["source1"][key] = val
                 continue
             d[key] = val
 
@@ -281,6 +299,29 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
 
     return d
 
+def merge_duplicates(l):
+    d = {}
+    deletes = []
+    for i, elem in enumerate(l):
+        key = elem["name"].strip().lower()
+        flag = True
+        for name in d.keys():
+            if (name in key or key in name) and\
+                    (not l[d[name]]["sources"]["source1"]["source name"] ==\
+                            elem["sources"]["source1"]["source name"]):
+                sources_size = len(l[d[name]]["sources"]) + 1
+                l[d[name]]["sources"]["source" + str(sources_size)] = elem["sources"]["source1"]
+                deletes.append(i)
+                flag = False
+                break
+        if flag:
+            d[key] = i
+
+    for i, delete in enumerate(sorted(deletes)):
+        del l[delete - i]
+
+    return l
+
 @app.route("/restaurants/<string:lat>/<string:lon>", methods=['Get'])
 def get_rests_by_lat_and_lon(lat, lon):
     d_api = {}
@@ -306,6 +347,9 @@ def get_rests_by_lat_and_lon(lat, lon):
     else:
         d["results_found"] += d_zomato["results_found"]
         d["restaurants"] += d_zomato["restaurants"]
+
+    d["restaurants"] = merge_duplicates(d["restaurants"])
+    d["results_found"] = len(d["restaurants"])
 
     return dumps(d), 200
 
