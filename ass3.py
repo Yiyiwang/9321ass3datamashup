@@ -95,10 +95,11 @@ def googleplaces_rest_detail_extract(d_googleplaces):
                 d["id"] = val
             else:
                 d[key] = val
-    d["rating"] = {
-        "aggregate_rating" : int(d_googleplaces["result"]["rating"]),
-        "votes" : n_reviews
-    }
+    if "rating" in d_googleplaces["result"]:
+        d["rating"] = {
+            "aggregate_rating" : int(d_googleplaces["result"]["rating"]),
+            "votes" : n_reviews
+        }
 
     return d
 
@@ -117,25 +118,32 @@ def get_googleplaces_rests_by_lat_and_lon(lat, lon, reqargs):
             radius = float(reqargs['radius'])
         except ValueError:
             pass # do nothing, assume default value
-    url = googleplaces_api_baseurl +\
-            "nearbysearch/json?key=" + get_googleplaces_key() +\
-            "&location=" + str(lat) + "," + str(lon) + "&radius=" + str(radius) +\
-            "&types=restaurant"
-    req = get(url)
-    res = loads(req.content)
-
+    cuisines = []
+    if "cuisines" in reqargs.keys():
+        cuisines = list(set([c.strip()\
+                for c in reqargs["cuisines"].strip().lower().split(",")]))
+    c_num = len(cuisines) if cuisines else 1
     d = {}
-    d["results_found"] = len(res["results"]) - 1
+    d["results_found"] = 0
     d["restaurants"] = []
-    for i in range(d["results_found"]):
-        if i == 0:
-            continue
+    for j in range(c_num):
         url = googleplaces_api_baseurl +\
-            "details/json?key=" + get_googleplaces_key() +\
-            "&placeid=" + res["results"][i]["place_id"]
+                "nearbysearch/json?key=" + get_googleplaces_key() +\
+                "&location=" + str(lat) + "," + str(lon) + "&radius=" + str(radius) +\
+                "&types=restaurant" + ("&keyword=" + cuisines[j] if cuisines else "")
         req = get(url)
-        res1 = loads(req.content)
-        d["restaurants"].append(googleplaces_rest_detail_extract(res1))
+        res = loads(req.content)
+        res_num = len(res["results"]) - 1
+        d["results_found"] += res_num
+        for i in range(res_num):
+            if i == 0:
+                continue
+            url = googleplaces_api_baseurl +\
+                "details/json?key=" + get_googleplaces_key() +\
+                "&placeid=" + res["results"][i]["place_id"]
+            req = get(url)
+            res1 = loads(req.content)
+            d["restaurants"].append(googleplaces_rest_detail_extract(res1))
 
     return d
 
@@ -274,7 +282,7 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
 def get_rests_by_lat_and_lon(lat, lon):
     d_api = {}
     for arg in request.args:
-        d_api = request.args.get(arg)
+        d_api[arg] = request.args.get(arg)
     d_googleplaces = get_googleplaces_rests_by_lat_and_lon(lat, lon, d_api)
     d_zomato = get_zomato_rests_by_lat_and_lon(lat, lon, d_api)
 
