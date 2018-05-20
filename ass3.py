@@ -107,11 +107,11 @@ def get_googleplaces_rests_by_lat_and_lon(lat, lon, reqargs):
     try:
         lat = float(lat)
     except ValueError:
-        return {"message" : "googleplaces invalid latitude"}
+        return {"message" : "invalid latitude"}
     try:
         lon = float(lon)
     except ValueError:
-        return {"message" : "googleplaces invalid longitude"}
+        return {"message" : "invalid longitude"}
     radius = 500 # in metres
     if 'radius' in reqargs.keys():
         try:
@@ -133,6 +133,8 @@ def get_googleplaces_rests_by_lat_and_lon(lat, lon, reqargs):
                 "&types=restaurant" + ("&keyword=" + cuisines[j] if cuisines else "")
         req = get(url)
         res = loads(req.content)
+        if not res["results"]:
+            return {"message" : "invalid coordinate"}
         res_num = len(res["results"]) - 1
         d["results_found"] += res_num
         for i in range(res_num):
@@ -227,11 +229,11 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
     try:
         lat = float(lat)
     except ValueError:
-        return {"message" : "zomato invalid latitude"}
+        return {"message" : "invalid latitude"}
     try:
         lon = float(lon)
     except ValueError:
-        return {"message" : "zomato invalid longitude"}
+        return {"message" : "invalid longitude"}
     d = get_zomato_search_result_params(reqargs)
     start = d['start']
     count = d['count']
@@ -257,9 +259,10 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
     req = get(url, headers=headers)
     res1 = loads(req.content)
     country_name = None
-    if len(res1["location_suggestions"]) != 0:
-        country_name = res1["location_suggestions"][0]["country_name"]
-        state_code = res1["location_suggestions"][0]["state_code"]
+    if not res1["location_suggestions"]:
+        return {"message" : "invalid coordinate"}
+    country_name = res1["location_suggestions"][0]["country_name"]
+    state_code = res1["location_suggestions"][0]["state_code"]
     assert country_name and state_code
 
     d = {}
@@ -291,11 +294,15 @@ def get_rests_by_lat_and_lon(lat, lon):
     d["restaurants"] = []
     if "message" in d_googleplaces.keys():
         d["message"] = d_googleplaces["message"]
+
+        return dumps(d), 400
     else:
         d["results_found"] += d_googleplaces["results_found"]
         d["restaurants"] += d_googleplaces["restaurants"]
     if "message" in d_zomato.keys():
         d["message"] = d_zomato["message"]
+
+        return dumps(d), 400
     else:
         d["results_found"] += d_zomato["results_found"]
         d["restaurants"] += d_zomato["restaurants"]
