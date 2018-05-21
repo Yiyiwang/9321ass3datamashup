@@ -107,7 +107,7 @@ function handleSearch() {
         , success: function(response){
             alert(
                 "Fancy " + response[0][0] + "?\n"
-                + "It featured in " + response[0][1] + " restaurants in this area."
+                + "It's featured in " + response[0][1] + " restaurants in this area."
             );
             $.each(response, function(i, v){
                 console.log(v)
