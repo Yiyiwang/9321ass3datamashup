@@ -1,4 +1,4 @@
-from flask import jsonify, Flask, request
+from flask import jsonify, Flask, request, Response
 from flask_restful import reqparse
 from json import loads, dumps
 from os import makedirs, remove
@@ -10,6 +10,9 @@ from subprocess import call
 from xlrd import open_workbook, sheet
 from zipfile import ZipFile
 import csv
+
+from analytics import RestaurantAnalytics, test_data
+from domains import Restaurant
 
 app = Flask(__name__)
 resdir = dirname(realpath(__file__)) + "/resources/"
@@ -464,6 +467,18 @@ def add_header(response):
 
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
+
+@app.route("/analytics/top_restaurant_types/<string:lat>/<string:long>", methods=["GET"])
+def top_restaurants_types(lat, long):
+    restaurant_list = test_data
+    #restaurant_list = Response.get_json(get_rests_by_lat_and_lon(lat, long))
+    # ls = []
+    # for i in restaurant_list[0]['restaurants']:
+    #     ls.append(Restaurant(i['name'], i['address'], 'source_id', '4', '20', 'type', 'url', zomato=True).toJSON()
+    #     )
+    #return jsonify(restaurant_list, 200)
+    #return jsonify([loads(i) for i in ls], 200)
+    return jsonify(RestaurantAnalytics.top_restaurant_types(restaurant_list), 200)
 
 
 if __name__ == '__main__':
