@@ -75,7 +75,7 @@ body, html {
               Search
           </button>-->
 
-          <div class="pac-card" id="pac-card">
+          <div class="pac-card" id="pac-card" style="position:fixed">
               <div>
                   <div id="title">
                       Autocomplete search
@@ -103,7 +103,7 @@ body, html {
                          placeholder="Enter a location">
               </div>
           </div>
-          <div style="width: auto" id="map"></div>
+          <div style="width: auto; position: fixed" id="map"></div>
 
           <div id="infowindow-content">
               <img src="" width="16" height="16" id="place-icon">
@@ -113,10 +113,11 @@ body, html {
 
       </div>
 
-      <!--<div class="ui center aligned container" style="margin: auto; width: 50%;">
+      <div class="ui center aligned container" style="margin: auto; width: 50%;">
 
-          <div id="locationResponse" class="ui middle aligned selection list" style="width: 100%; margin-top: 10px" >
+          <div id="locationResponse" class="ui middle aligned scrolling selection list" style="width: 100%; margin-top: 10px" >
 
+              <!--
               <div class="item" style="background-color: whitesmoke; margin-bottom: 10px">
 
               <div style="display: inline-block">
@@ -193,9 +194,9 @@ body, html {
                   </div>
 
               </div>
-
+                -->
           </div>
-      </div>-->
+      </div>
 
   </div>
 </div>
