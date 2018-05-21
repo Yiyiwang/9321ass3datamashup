@@ -1,26 +1,37 @@
-var json={'a': 'First', 'b': 'Second', 'c': 'Third'};
 
+var autocomplete = null;
 
 function initMap() {
-
+    var map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: -33.8688, lng: 151.2195},
+        zoom: 13
+    });
     var card = document.getElementById('pac-card');
     var input = document.getElementById('pac-input');
+    var types = document.getElementById('type-selector');
+    var strictBounds = document.getElementById('strict-bounds-selector');
 
-    var autocomplete = new google.maps.places.Autocomplete(input);
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(card);
+
+    autocomplete = new google.maps.places.Autocomplete(input);
+
+    // Bind the map's bounds (viewport) property to the autocomplete object,
+    // so that the autocomplete requests use the current map bounds for the
+    // bounds option in the request.
+    autocomplete.bindTo('bounds', map);
 
     var infowindow = new google.maps.InfoWindow();
     var infowindowContent = document.getElementById('infowindow-content');
-
     infowindow.setContent(infowindowContent);
+    var marker = new google.maps.Marker({
+        map: map,
+        anchorPoint: new google.maps.Point(0, -29)
+    });
 
     autocomplete.addListener('place_changed', function() {
-
-        console.log("PLACE CHANGED");
-
         infowindow.close();
-
+        marker.setVisible(false);
         var place = autocomplete.getPlace();
-
         if (!place.geometry) {
             // User entered the name of a Place that was not suggested and
             // pressed the Enter key, or the Place Details request failed.
@@ -28,7 +39,16 @@ function initMap() {
             return;
         }
 
-        // NOT USED AT THE MOMENT
+        // If the place has a geometry, then present it on a map.
+        if (place.geometry.viewport) {
+            map.fitBounds(place.geometry.viewport);
+        } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(17);  // Why 17? Because it looks good.
+        }
+        marker.setPosition(place.geometry.location);
+        marker.setVisible(true);
+
         var address = '';
         if (place.address_components) {
             address = [
@@ -38,94 +58,59 @@ function initMap() {
             ].join(' ');
         }
 
+        infowindowContent.children['place-icon'].src = place.icon;
+        infowindowContent.children['place-name'].textContent = place.name;
+        infowindowContent.children['place-address'].textContent = address;
+        infowindow.open(map, marker);
+
+        handleSearch()
+
     });
 
-}
-
-
-function handleLocationSearch() {
-
-    document.getElementById('locationResponse').innerHTML = "";
-    ul = makeUL();
-    document.getElementById('locationResponse').appendChild(makeUL(json));
-}
-
-
-function makeUL() {
-    // Create the list element:
-    var list = document.createElement('list');
-    list.class = "ui middle aligned selection";
-    list.style = "wirdth:100%; margin-top: 10px";
-
-    for(var i = 0; i < Object.keys(json).length; i++) {
-        // Create the list item:
-        var item = document.createElement('div');
-        item.class = "listitem";
-        //item.style = "background-color:whitesmoke; margin-bottom:10px; height:60px";
-
-        var img = document.createElement('img');
-
-        img.class = 'ui avatar image';
-        img.src = 'resources/bis_avat.png';
-        img.style = "height:40%";
-
-        var header = document.createElement('header');
-        header.innerHTML = Object.values(json)[i];
-
-        item.appendChild(img);
-        item.appendChild(header);
-
-        // Add it to the list:
-        list.appendChild(item);
+    // Sets a listener on a radio button to change the filter type on Places
+    // Autocomplete.
+    function setupClickListener(id, types) {
+        var radioButton = document.getElementById(id);
+        radioButton.addEventListener('click', function() {
+            autocomplete.setTypes(types);
+        });
     }
 
-    // Finally, return the constructed list:
-    return list;
+    setupClickListener('changetype-all', []);
+    setupClickListener('changetype-address', ['address']);
+    setupClickListener('changetype-establishment', ['establishment']);
+    setupClickListener('changetype-geocode', ['geocode']);
+
+    document.getElementById('use-strict-bounds')
+        .addEventListener('click', function() {
+            console.log('Checkbox clicked! New state=' + this.checked);
+            autocomplete.setOptions({strictBounds: this.checked});
+        });
 }
 
-function myMap()
-{
-    myCenter=new google.maps.LatLng(41.878114, -87.629798);
-    var mapOptions= {
-        center:myCenter,
-        zoom:12, scrollwheel: false, draggable: false,
-        mapTypeId:google.maps.MapTypeId.ROADMAP
-    };
-    var map=new google.maps.Map(document.getElementById("googleMap"),mapOptions);
+function handleSearch() {
 
-    var marker = new google.maps.Marker({
-        position: myCenter,
-    });
-    marker.setMap(map);
-}
+    place = autocomplete.getPlace();
+    loc = place.geometry.location;
 
-// Modal Image Gallery
-function onClick(element) {
-    document.getElementById("img01").src = element.src;
-    document.getElementById("modal01").style.display = "block";
-    var captionText = document.getElementById("caption");
-    captionText.innerHTML = element.alt;
-}
+    console.log(loc.lat());
+    console.log(loc.lng());
 
+    url_string = "http://127.0.0.1:5000/restaurant/" + loc.lat().toString() + "/" + loc.lng().toString();
 
-function myFunction() {
-    var navbar = document.getElementById("myNavbar");
-    if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
-        navbar.className = "w3-bar" + " w3-card" + " w3-animate-top" + " w3-white";
-    } else {
-        navbar.className = navbar.className.replace(" w3-card w3-animate-top w3-white", "");
-    }
-}
+    fetch(url_string)
+        .then(function (response) {
+            if (response.status !== 200) {
+                console.log('Looks like there was a problem. Status Code: ' +
+                    response.status);
+                return;
+            }
 
-// Used to toggle the menu on small screens when clicking on the menu button
-function toggleFunction() {
-    var x = document.getElementById("navDemo");
-    if (x.className.indexOf("w3-show") == -1) {
-        x.className += " w3-show";
-    } else {
-        x.className = x.className.replace(" w3-show", "");
-    }
+            // Examine the text in the response
+            response.json().then(function(data) {
+                console.log(data);
+            });
+        })
 }
 
 initMap();
-
