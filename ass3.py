@@ -459,6 +459,13 @@ def get_data_by_location():
     except IOError:
         pass
 
+@app.after_request
+def add_header(response):
+
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+
 if __name__ == '__main__':
     read_file()
     app.run()

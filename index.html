@@ -56,11 +56,11 @@ body, html {
 <!-- First Parallax Image with Logo Text -->
 <div class="bgimg-1 w3-display-container w3-opacity-min" id="home">
 
-  <div class="w3-display-middle" style="white-space:nowrap;">
+  <div class="w3-display-middle" style="white-space:nowrap; width: 70%">
 
-      <div class="ui middle center aligned container" style="margin: auto">
+      <div class="ui middle center aligned container" style="margin: auto; width: 70%">
 
-          <div class="pac-card" id="pac-card" style="display: inline-block">
+        <!--<div class="pac-card" id="pac-card" style="display: inline-block">
 
               <div id="pac-container" style="margin-bottom: 10px" class="ui large icon input loading">
                   <input id="pac-input" type="text" placeholder="Location...">
@@ -73,14 +73,51 @@ body, html {
               style="margin-left: -5px; display: inline-block"
               onclick="handleLocationSearch()">
               Search
-          </button>
+          </button>-->
+
+          <div class="pac-card" id="pac-card" style="position:fixed">
+              <div>
+                  <div id="title">
+                      Autocomplete search
+                  </div>
+                  <div id="type-selector" class="pac-controls">
+                      <input type="radio" name="type" id="changetype-all" checked="checked">
+                      <label for="changetype-all">All</label>
+
+                      <input type="radio" name="type" id="changetype-establishment">
+                      <label for="changetype-establishment">Establishments</label>
+
+                      <input type="radio" name="type" id="changetype-address">
+                      <label for="changetype-address">Addresses</label>
+
+                      <input type="radio" name="type" id="changetype-geocode">
+                      <label for="changetype-geocode">Geocodes</label>
+                  </div>
+                  <div id="strict-bounds-selector" class="pac-controls">
+                      <input type="checkbox" id="use-strict-bounds" value="">
+                      <label for="use-strict-bounds">Strict Bounds</label>
+                  </div>
+              </div>
+              <div id="pac-container">
+                  <input id="pac-input" type="text"
+                         placeholder="Enter a location">
+              </div>
+          </div>
+          <div style="width: auto; position: fixed" id="map"></div>
+
+          <div id="infowindow-content">
+              <img src="" width="16" height="16" id="place-icon">
+              <span id="place-name"  class="title"></span><br>
+              <span id="place-address"></span>
+          </div>
 
       </div>
 
       <div class="ui center aligned container" style="margin: auto; width: 50%;">
 
-          <div id="locationResponse" class="ui middle aligned selection list" style="width: 100%; margin-top: 10px" >
+          <div id="locationResponse" class="ui middle aligned scrolling selection list" style="width: 100%; margin-top: 10px" >
 
+              <!--
               <div class="item" style="background-color: whitesmoke; margin-bottom: 10px">
 
               <div style="display: inline-block">
@@ -157,7 +194,7 @@ body, html {
                   </div>
 
               </div>
-
+                -->
           </div>
       </div>
 

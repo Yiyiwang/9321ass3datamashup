@@ -226,15 +226,15 @@ function populate_UI(data) {
         restaurant = data[i];
 
         var html =
-            '<div style="background-color: whitesmoke">'+
-            '<div class="content" style="display: inline-block; vertical-align: middle">' +
+            '<div>'+
+            '<div class="content">' +
                 '<div class="header">' + restaurant.name + '</div>' +
             '</div>';
 
         for(var s = 0; s < restaurant.data.length; s++){
 
             html +=
-                '<div style="display: inline-block;">'+
+                '<div>'+
                 '<img class="ui avatar image" src="resources/bis_avat.png">' +
                 '<div>' + restaurant.data[s].rating + '</div>'+
                 '</div>'
