@@ -4,5 +4,6 @@ include
 lib
 lib64
 share
+venv1
 pyvenv.cfg
 pip-selfcheck.json
