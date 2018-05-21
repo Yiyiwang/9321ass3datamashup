@@ -1,4 +1,4 @@
-from flask import jsonify, Flask, request
+from flask import jsonify, Flask, request, Response
 from flask_restful import reqparse
 from json import loads, dumps
 from os import makedirs, remove
@@ -10,6 +10,9 @@ from subprocess import call
 from xlrd import open_workbook, sheet
 from zipfile import ZipFile
 import csv
+
+from analytics import RestaurantAnalytics, test_data
+from domains import Restaurant
 
 app = Flask(__name__)
 resdir = dirname(realpath(__file__)) + "/resources/"
@@ -350,6 +353,24 @@ def get_rests_by_lat_and_lon(lat, lon):
 
     d["restaurants"] = merge_duplicates(d["restaurants"])
     d["results_found"] = len(d["restaurants"])
+    for entity in d["restaurants"]:
+        sources = entity["sources"]
+        if len(sources) > 1:
+            votes_total = 0
+            aggregate_rating = 0
+            for s in sources:
+                rating = s["rating"]
+                votes_total += rating["votes"]
+            for s in sources:
+                rating = s["rating"]
+                votes_weight = rating["votes"] / votes_total
+                votes_rating = rating["aggregate_rating"] * votes_weight
+                aggregate_rating += votes_rating
+                s.pop("rating", None)
+            entity["aggregate_rating"] = round(aggregate_rating, 1)
+        else:
+            entity["aggregate_rating"] = sources[0]["rating"]["aggregate_rating"]
+            sources[0].pop("rating", None)
 
     return dumps(d), 200
 
@@ -446,6 +467,18 @@ def add_header(response):
 
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
+
+@app.route("/analytics/top_restaurant_types/<string:lat>/<string:long>", methods=["GET"])
+def top_restaurants_types(lat, long):
+    restaurant_list = test_data
+    #restaurant_list = Response.get_json(get_rests_by_lat_and_lon(lat, long))
+    # ls = []
+    # for i in restaurant_list[0]['restaurants']:
+    #     ls.append(Restaurant(i['name'], i['address'], 'source_id', '4', '20', 'type', 'url', zomato=True).toJSON()
+    #     )
+    #return jsonify(restaurant_list, 200)
+    #return jsonify([loads(i) for i in ls], 200)
+    return jsonify(RestaurantAnalytics.top_restaurant_types(restaurant_list), 200)
 
 
 if __name__ == '__main__':

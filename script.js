@@ -96,6 +96,28 @@ function handleSearch() {
     console.log(loc.lat());
     console.log(loc.lng());
 
+    var host = "http://127.0.0.1";
+    var port = ":5000";
+    var geocords_params = loc.lat().toString() + "/"  + loc.lng().toString();
+    // get top restaurant type by location
+    $.ajax({
+        url: host + port + "/analytics/top_restaurant_types/"
+            + geocords_params
+        , type: "GET"
+        , success: function(response){
+            alert(
+                "Fancy " + response[0][0] + "?\n"
+                + "It's featured in " + response[0][1] + " restaurants in this area."
+            );
+            $.each(response, function(i, v){
+                console.log(v)
+            });
+        }
+        , error: function(error){
+            console.log(error)
+        }
+    });
+
     url_string = "http://127.0.0.1:5000/restaurants/" +
         loc.lat().toString() + "/" +
         loc.lng().toString(); //+ "?" +
