@@ -350,6 +350,24 @@ def get_rests_by_lat_and_lon(lat, lon):
 
     d["restaurants"] = merge_duplicates(d["restaurants"])
     d["results_found"] = len(d["restaurants"])
+    for entity in d["restaurants"]:
+        sources = entity["sources"]
+        if len(sources) > 1:
+            votes_total = 0
+            aggregate_rating = 0
+            for s in sources:
+                rating = s["rating"]
+                votes_total += rating["votes"]
+            for s in sources:
+                rating = s["rating"]
+                votes_weight = rating["votes"] / votes_total
+                votes_rating = rating["aggregate_rating"] * votes_weight
+                aggregate_rating += votes_rating
+                s.pop("rating", None)
+            entity["aggregate_rating"] = round(aggregate_rating, 1)
+        else:
+            entity["aggregate_rating"] = sources[0]["rating"]["aggregate_rating"]
+            sources[0].pop("rating", None)
 
     return dumps(d), 200
 
