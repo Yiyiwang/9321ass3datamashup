@@ -96,7 +96,12 @@ function handleSearch() {
     console.log(loc.lat());
     console.log(loc.lng());
 
-    url_string = "http://127.0.0.1:5000/restaurant/" + loc.lat().toString() + "/" + loc.lng().toString();
+    url_string = "http://127.0.0.1:5000/restaurants/" +
+        loc.lat().toString() + "/" +
+        loc.lng().toString() + "?" +
+        "radius=100";
+
+    console.log(url_string);
 
     fetch(url_string)
         .then(function (response) {
@@ -109,8 +114,35 @@ function handleSearch() {
             // Examine the text in the response
             response.json().then(function(data) {
                 console.log(data);
+
+                populate_results(data)
+
             });
         })
+}
+
+function populate_results(data){
+
+    var best_results = [];
+
+    var restaurants = data.restaurants;
+
+    for (var key in restaurants){
+
+        if (restaurants.hasOwnProperty(key)) {
+
+
+            var restaurant = restaurants[key];
+
+            var restaurant_sources = restaurant.sources;
+
+            if (Object.keys(restaurant_sources).length){
+                best_results.push(restaurant)
+            }
+        }
+    }
+
+    console.log(best_results)
 }
 
 initMap();
