@@ -99,8 +99,9 @@ function handleSearch() {
     var host = "http://127.0.0.1";
     var port = ":5000";
     var geocords_params = loc.lat().toString() + "/"  + loc.lng().toString();
+
     // get top restaurant type by location
-    $.ajax({
+    /*$.ajax({
         url: host + port + "/analytics/top_restaurant_types/"
             + geocords_params
         , type: "GET"
@@ -116,7 +117,7 @@ function handleSearch() {
         , error: function(error){
             console.log(error)
         }
-    });
+    });*/
 
     url_string = "http://127.0.0.1:5000/restaurants/" +
         loc.lat().toString() + "/" +
@@ -125,7 +126,7 @@ function handleSearch() {
 
     console.log(url_string);
 
-    /*fetch(url_string)
+    fetch(url_string)
         .then(function (response) {
             if (response.status !== 200) {
                 console.log('Looks like there was a problem. Status Code: ' +
@@ -138,8 +139,7 @@ function handleSearch() {
                 populate_results(data)
 
             });
-        })
-    */
+        });
 
     // ONLY FOR DEBGUD, NOT CONNECTED TO API, UNCOMMENT ABOVE
 
@@ -190,7 +190,7 @@ function handleSearch() {
         }
     ];
 
-    populate_UI(data)
+    //populate_UI(data)
 
 }
 
@@ -211,16 +211,23 @@ function populate_results(data){
 
             rest_info = {
                 "name": restaurant.name,
+                "aggregate_rating": restaurant['aggregate_rating'] ,
                 "data": []
             };
+
+            console.log("rest_info: " + rest_info);
 
             for( var s = 0; s < restaurant.sources.length; s++){
 
                 source = restaurant.sources[s];
 
+                console.log("source", source);
+                console.log("name:", source['source name']);
+                console.log("rating:", source['rating']);
+
                 result = {
-                    "name": source.name,
-                    "rating": source.rating.aggregate_rating
+                    "name": source['source name'],
+                    "rating": source['rating'].aggregate_rating
                 };
 
                 rest_info['data'].push(result)
@@ -228,53 +235,75 @@ function populate_results(data){
             }
 
             best_results.push(rest_info);
-
         }
-
     }
     
     
     populate_UI(best_results);
 
     console.log(best_results);
+
     console.log("DONE");
     
 }
 
 function populate_UI(data) {
 
+    source_to_avat_map = {
+        'googleplaces': 'resources/google_avat.jpeg',
+        'zomato': 'resources/zomato.jpeg'
+    };
+
     for(var i = 0; i < data.length; i++){
 
         restaurant = data[i];
+        restaurant_name = restaurant.name;
+        aggregate_rating = restaurant.aggregate_rating;
 
         var html =
-        '<div style="background-color: whitesmoke;">'+
+        '<div style="background-color: whitesmoke; display: inline-flex; width: 100%; margin-bottom: 1px;">'+
 
             '<div style="' +
             'display: inline-block;' +
-            ' width: 30%; ' +
-            'position: absolute;'+
-            'right: 0px;'+
-            'top: 0px;'+
-            'height:50px">' +
-            "Hello" +
+            'margin-bottom: auto;'+
+            'margin-top: auto;'+
+            'margin-left: 5px;'+
+            'width: 30%; ' +
+            'font-size: 17px; ' +
+            'color: #111111; ' +
+            'height: 100%; ' +
+            'overflow-wrap: normal">' +
+            restaurant_name +
             '</div>'+
 
-            '<div style="display: inline-block; width: 70%; height:inherit">';
+            '<div style="display: inline-block; width: 50%; height:inherit">';
+
+        box_width = 100 / restaurant.data.length;
 
         for(var s = 0; s < restaurant.data.length; s++){
 
-            box_width = 100 / restaurant.data.length;
+            source_name = restaurant.data[s].name;
+            source_icon = source_to_avat_map[source_name];
 
             html +=
-                '<div style="display: inline-block; width:'+ box_width + '%' + ';"' + '>'+
-                    '<img class="ui avatar image" src="resources/bis_avat.png">' +
+                '<div style="display: inline-block; ' +
+                    'width:'+ box_width + '%;' +
+                    'height: 100%;'+
+                    'padding-top: 10px;'+
+                    '">'+
+                    '<img class="ui avatar image" src="' + source_icon + '">' +
                     '<div>' + restaurant.data[s].rating + '</div>'+
                 '</div>'
         }
 
         html +=
-            '</div>' +
+        '</div>'+
+            '<div style="width: 20%; padding-top: 5px;">' +
+                '<div style="display: inline-block">'+
+                    '<img style="height: 40px; width: 40px" class="ui avatar image" src="resources/dude_avat.png">' +
+                    '<div>' + aggregate_rating + '</div>'+
+                '</div>'
+            '</div>'+
         '</div>';
 
         myList = document.getElementById('locationResponse');
