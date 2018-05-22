@@ -303,9 +303,6 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
 
     return d
 
-
-
-
 @app.route("/restaurants/<string:lat>/<string:lon>", methods=['Get'])
 def get_rests_by_lat_and_lon(lat, lon):
     d_api = {}
@@ -369,11 +366,11 @@ def get_rests_by_lat_and_lon(lat, lon):
                 votes_weight = rating["votes"] / votes_total
                 votes_rating = rating["aggregate_rating"] * votes_weight
                 aggregate_rating += votes_rating
-                s.pop("rating", None)
+                # s.pop("rating", None)
             entity["aggregate_rating"] = round(aggregate_rating, 1)
         else:
             entity["aggregate_rating"] = sources[0]["rating"]["aggregate_rating"]
-            sources[0].pop("rating", None)
+            # sources[0].pop("rating", None)
 
     return dumps(d), 200
 
@@ -467,8 +464,8 @@ def get_data_by_location():
 
 @app.after_request
 def add_header(response):
-
     response.headers['Access-Control-Allow-Origin'] = '*'
+
     return response
 
 @app.route("/analytics/top_restaurant_types/<string:lat>/<string:long>", methods=["GET"])
@@ -482,7 +479,6 @@ def top_restaurants_types(lat, long):
     #return jsonify(restaurant_list, 200)
     #return jsonify([loads(i) for i in ls], 200)
     return jsonify(RestaurantAnalytics.top_restaurant_types(restaurant_list), 200)
-
 
 if __name__ == '__main__':
     read_file()
