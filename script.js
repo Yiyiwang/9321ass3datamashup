@@ -248,21 +248,34 @@ function populate_UI(data) {
         restaurant = data[i];
 
         var html =
-            '<div style="background-color: whitesmoke">'+
-            '<div class="content" style="display: inline-block; vertical-align: middle">' +
-                '<div class="header">' + restaurant.name + '</div>' +
-            '</div>';
+        '<div style="background-color: whitesmoke;">'+
+
+            '<div style="' +
+            'display: inline-block;' +
+            ' width: 30%; ' +
+            'position: absolute;'+
+            'right: 0px;'+
+            'top: 0px;'+
+            'height:50px">' +
+            "Hello" +
+            '</div>'+
+
+            '<div style="display: inline-block; width: 70%; height:inherit">';
 
         for(var s = 0; s < restaurant.data.length; s++){
 
+            box_width = 100 / restaurant.data.length;
+
             html +=
-                '<div style="display: inline-block;">'+
-                '<img class="ui avatar image" src="resources/bis_avat.png">' +
-                '<div>' + restaurant.data[s].rating + '</div>'+
+                '<div style="display: inline-block; width:'+ box_width + '%' + ';"' + '>'+
+                    '<img class="ui avatar image" src="resources/bis_avat.png">' +
+                    '<div>' + restaurant.data[s].rating + '</div>'+
                 '</div>'
         }
 
-        html += '</div>';
+        html +=
+            '</div>' +
+        '</div>';
 
         myList = document.getElementById('locationResponse');
 

@@ -304,27 +304,6 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
     return d
 
 
-def get_zomato_review(d_zomato):
-    headers = {
-        "Content-Type": "application/json",
-        "user-key": get_zomato_key()
-    }
-    reviews = []
-    for r in d_zomato:
-        #print(r["sources"])
-        id = r["sources"][0]["id"]
-        #name = r["sources"][0]["name"]
-        url = zomato_api_baseurl + "reviews?res_id" + id
-        req = get(url, headers=headers)
-        res = loads(req.content)
-        res_entity = {}
-        res_entity["id"] = id
-        res_entity["user_reviews"] = res["user_reviews"]
-        reviews.append(res_entity)
-        #print(res_entity)
-    return res_entity
-
-
 @app.route("/restaurants/<string:lat>/<string:lon>", methods=['Get'])
 def get_rests_by_lat_and_lon(lat, lon):
     d_api = {}
@@ -332,7 +311,7 @@ def get_rests_by_lat_and_lon(lat, lon):
         d_api[arg] = request.args.get(arg)
     d_googleplaces = get_googleplaces_rests_by_lat_and_lon(lat, lon, d_api)
     d_zomato = get_zomato_rests_by_lat_and_lon(lat, lon, d_api)
-    reviews_zomato = get_zomato_review(d_zomato["restaurants"])
+    
     d = {}
     d["results_found"] = 0
     d["restaurants"] = []
