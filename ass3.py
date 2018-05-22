@@ -222,6 +222,7 @@ def zomato_cuisine_names_to_ids(l_user, l_zomato):
 def zomato_rest_detail_extract(d_zomato, country_name, state_code):
     d = {}
     d["sources"] = [{"source name" : "zomato"}]
+
     for key, val in d_zomato["restaurant"].items():
         if key in ["id", "name", "url", "location", "cuisines", "user_rating"]:
             # maybe "price_range"
@@ -299,7 +300,23 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
 
         d["results_found"] += len(res["restaurants"])
         for rest in res["restaurants"]:
-            d["restaurants"].append(zomato_rest_detail_extract(rest, country_name, state_code))
+            rest_details = zomato_rest_detail_extract(rest, country_name, state_code)
+            #geting user review for analysis
+            #print(rest_details["sources"][0]["id"])
+            url = zomato_api_baseurl + "reviews?res_id=" +rest_details["sources"][0]["id"]
+            req = get(url, headers=headers)
+            user_reviews = loads(req.content)["user_reviews"]
+            #print(user_reviews)
+            #processing each user review
+            for r in user_reviews:
+                r["review"].pop("rating_color")
+                r["review"].pop("timestamp")
+                foodie_level_num = r["review"]["user"]["foodie_level_num"]
+                r["review"].pop("user")
+                r["foodie_level_num"] = foodie_level_num
+            user_reviews = sorted(user_reviews, key=lambda u:u["foodie_level_num"],reverse=True)
+            rest_details["sources"][0]["user_reviews"] = user_reviews
+            d["restaurants"].append(rest_details)
 
     return d
 
