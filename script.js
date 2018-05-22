@@ -8,8 +8,6 @@ function initMap() {
     });
     var card = document.getElementById('pac-card');
     var input = document.getElementById('pac-input');
-    var types = document.getElementById('type-selector');
-    var strictBounds = document.getElementById('strict-bounds-selector');
 
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(card);
 
@@ -67,28 +65,27 @@ function initMap() {
 
     });
 
-    // Sets a listener on a radio button to change the filter type on Places
-    // Autocomplete.
-    function setupClickListener(id, types) {
-        var radioButton = document.getElementById(id);
-        radioButton.addEventListener('click', function() {
-            autocomplete.setTypes(types);
-        });
-    }
+}
 
-    setupClickListener('changetype-all', []);
-    setupClickListener('changetype-address', ['address']);
-    setupClickListener('changetype-establishment', ['establishment']);
-    setupClickListener('changetype-geocode', ['geocode']);
+function show_loader(){
+    var loader = document.getElementById('loader');
+    loader.classList.remove('disabled');
+    loader.classList.add('active')
 
-    document.getElementById('use-strict-bounds')
-        .addEventListener('click', function() {
-            console.log('Checkbox clicked! New state=' + this.checked);
-            autocomplete.setOptions({strictBounds: this.checked});
-        });
+}
+
+function disable_loader(){
+    var loader = document.getElementById('loader');
+    loader.classList.add('disabled');
+    loader.classList.remove('active')
 }
 
 function handleSearch() {
+
+    show_loader();
+
+    location_list = document.getElementById('locationResponse');
+    location_list.innerHTML = '';
 
     place = autocomplete.getPlace();
     loc = place.geometry.location;
@@ -131,8 +128,12 @@ function handleSearch() {
             if (response.status !== 200) {
                 console.log('Looks like there was a problem. Status Code: ' +
                     response.status);
+                var output = document.getElementById('locationResponse')
+                output.innerHTML ='<div> No results available </div>'
                 return;
             }
+
+            disable_loader();
 
             // Examine the text in the response
             response.json().then(function(data) {
@@ -140,90 +141,35 @@ function handleSearch() {
 
             });
         });
-
-    // ONLY FOR DEBGUD, NOT CONNECTED TO API, UNCOMMENT ABOVE
-
-    data = [
-        {
-            "name": "PETER",
-            "data": [
-                {
-                    "name": "Google",
-                    "rating": 4
-                },
-                {
-                    "name": "Tripadvisor",
-                    "rating": 5
-                }
-            ]
-
-
-        },
-        {
-            "name": "FIshers",
-            "data": [
-                {
-                    "name": "Google",
-                    "rating": 4
-                },
-                {
-                    "name": "Tripadvisor",
-                    "rating": 5
-                }
-            ]
-
-
-        },
-        {
-            "name": "Rollings",
-            "data": [
-                {
-                    "name": "Google",
-                    "rating": 4
-                },
-                {
-                    "name": "Tripadvisor",
-                    "rating": 5
-                }
-            ]
-
-        }
-    ];
-
-    //populate_UI(data)
-
 }
 
 function populate_results(data){
 
-    // FINDS RESULTS WITH MORE THEN 1 SOURCE
-    var best_results = [];
+    var multi_source_only_check = document.getElementById('show_multi_source');
+    var threshold = 0;
 
+    if(multi_source_only_check.checked){
+        threshold = 1;
+    }
+
+    var results = [];
     var restaurants = data.restaurants;
 
-    for (var i = 0; i < restaurants.length; i++){
+    for (var i = 0; i < restaurants.length; i++) {
 
         restaurant = restaurants[i];
 
-        if (restaurant["sources"].length > 1){
-
-            console.log("RESTAURANT WITH MORE THEN 1 SOURCE FOUND");
+        if (restaurant["sources"].length > threshold) {
 
             rest_info = {
                 "name": restaurant.name,
-                "aggregate_rating": restaurant['aggregate_rating'] ,
+                "aggregate_rating": restaurant['aggregate_rating'],
                 "data": []
             };
 
-            console.log("rest_info: " + rest_info);
-
-            for( var s = 0; s < restaurant.sources.length; s++){
+            for (var s = 0; s < restaurant.sources.length; s++) {
 
                 source = restaurant.sources[s];
-
-                console.log("source", source);
-                console.log("name:", source['source name']);
-                console.log("rating:", source['rating']);
 
                 result = {
                     "name": source['source name'],
@@ -231,17 +177,12 @@ function populate_results(data){
                 };
 
                 rest_info['data'].push(result)
-
             }
-
-            best_results.push(rest_info);
+            results.push(rest_info);
         }
     }
-    
-    
-    populate_UI(best_results);
 
-    console.log(best_results);
+    populate_UI(results);
 
     console.log("DONE");
     
@@ -267,12 +208,13 @@ function populate_UI(data) {
             'display: inline-block;' +
             'margin-bottom: auto;'+
             'margin-top: auto;'+
-            'margin-left: 5px;'+
+            'margin-left: 8px;'+
             'width: 30%; ' +
             'font-size: 17px; ' +
             'color: #111111; ' +
             'height: 100%; ' +
-            'overflow-wrap: normal">' +
+            'overflow: hidden; ' +
+            'text-overflow: ellipsis">' +
             restaurant_name +
             '</div>'+
 
@@ -302,7 +244,7 @@ function populate_UI(data) {
                 '<div style="display: inline-block">'+
                     '<img style="height: 40px; width: 40px" class="ui avatar image" src="resources/dude_avat.png">' +
                     '<div>' + aggregate_rating + '</div>'+
-                '</div>'
+                '</div>'+
             '</div>'+
         '</div>';
 
