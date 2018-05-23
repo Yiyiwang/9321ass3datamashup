@@ -81,13 +81,22 @@ def googleplaces_rest_detail_extract(d_googleplaces):
             if "reviews" in d_googleplaces["result"].keys() else 0
     for key, val in d_googleplaces["result"].items():
         # maybe "formatted_phone_number"
-        if key in ["formatted_address", "name", "place_id", "types", "url"]:
+        if key in ["formatted_address", "name", "place_id", "types", "url", "reviews"]:
             if key == "formatted_address":
                 d["address"] = val
             elif key == "place_id":
                 d["sources"][0]["id"] = val
             elif key == "types" or key == "url":
                 d["sources"][0][key] = val
+            elif key == "reviews":
+                d["sources"][0][key] = []
+                for review in val:
+                    d["sources"][0][key].append({
+                        "rating" : review["rating"],
+                        "review_text" : review["text"],
+                        "friendly_timestamp" : review["relative_time_description"],
+                        "timestamp" : review["time"]
+                    })
             else:
                 d[key] = val
     if "rating" in d_googleplaces["result"]:
@@ -223,7 +232,7 @@ def zomato_rest_detail_extract(d_zomato, country_name, state_code):
     d = {}
     d["sources"] = [{"source name" : "zomato"}]
     for key, val in d_zomato["restaurant"].items():
-        if key in ["id", "name", "url", "location", "cuisines", "user_rating"]:
+        if key in ["id", "name", "url", "location", "cuisines", "user_rating", "reviews"]:
             # maybe "price_range"
             if key == "user_rating":
                 val.pop("rating_text", None)
@@ -242,6 +251,16 @@ def zomato_rest_detail_extract(d_zomato, country_name, state_code):
                 continue
             elif key == "id" or key == "url":
                 d["sources"][0][key] = val
+                continue
+            elif key == "reviews":
+                d["sources"][0][key] = []
+                for review in val:
+                    d["sources"][0][key].append({
+                        "rating" : review["review"]["rating"],
+                        "review_text" : review["review"]["review_text"],
+                        "friendly_timestamp" : review["review"]["review_time_friendly"],
+                        "timestamp" : review["review"]["timestamp"]
+                    })
                 continue
             d[key] = val
 
@@ -299,23 +318,12 @@ def get_zomato_rests_by_lat_and_lon(lat, lon, reqargs):
 
         d["results_found"] += len(res["restaurants"])
         for rest in res["restaurants"]:
-            rest_details = zomato_rest_detail_extract(rest, country_name, state_code)
-            #geting user review for analysis
-            #print(rest_details["sources"][0]["id"])
-            url = zomato_api_baseurl + "reviews?res_id=" +rest_details["sources"][0]["id"]
+            # geting user review for analysis
+            url = zomato_api_baseurl + "reviews?res_id=" + rest["restaurant"]["id"]
             req = get(url, headers=headers)
-            user_reviews = loads(req.content)["user_reviews"]
-            #print(user_reviews)
-            #processing each user review
-            for r in user_reviews:
-                r["review"].pop("rating_color")
-                r["review"].pop("timestamp")
-                foodie_level_num = r["review"]["user"]["foodie_level_num"]
-                r["review"].pop("user")
-                r["foodie_level_num"] = foodie_level_num
-            user_reviews = sorted(user_reviews, key=lambda u:u["foodie_level_num"],reverse=True)
-            rest_details["sources"][0]["user_reviews"] = user_reviews
-            d["restaurants"].append(rest_details)
+            res1 = loads(req.content)
+            rest["restaurant"]["reviews"] = res1["user_reviews"]
+            d["restaurants"].append(zomato_rest_detail_extract(rest, country_name, state_code))
 
     return d
 
@@ -382,11 +390,9 @@ def get_rests_by_lat_and_lon(lat, lon):
                 votes_weight = rating["votes"] / votes_total
                 votes_rating = rating["aggregate_rating"] * votes_weight
                 aggregate_rating += votes_rating
-                # s.pop("rating", None)
             entity["aggregate_rating"] = round(aggregate_rating, 1)
         else:
             entity["aggregate_rating"] = sources[0]["rating"]["aggregate_rating"]
-            # sources[0].pop("rating", None)
 
     return dumps(d), 200
 
@@ -446,37 +452,36 @@ def get_zomato_rests_by_city(city):
 
     return dumps(d), 200
 
-@app.route("/api/location", methods=['Get'])
-def get_data_by_location():
-    parser = reqparse.RequestParser()
-    parser.add_argument('location', type=str)
-    args = parser.parse_args()
-    location = args.get("location")
-    loca_code = 0
-    if location in country_code:
-        loca_code = country_code[location]
-    return_list=[]
-    #open trpadvisor dataset and processing data
-    with open(resdir + tripadvisor_fname) as f:
-        f_csv = csv.DictReader(f)
-        for row in f_csv :
-            if row['Country'] == location:
-                return_list.append(row)
-    #return if there is no relate data in zomato dataset
-    if loca_code == 0:
-        return jsonify(return_list), 200
-    #open zomato dataset and processing data
-    try:
-        with open(resdir + zomato_fname, 'r',encoding='ISO-8859-1') as f1:
-            fi_csv = csv.DictReader(f1)
-            for row in fi_csv:
-                #print(loca_code,row['Country Code'])
-                if int(row['Country Code']) == loca_code:
-                    return_list.append(row)
+# def get_data_by_location():
+#     parser = reqparse.RequestParser()
+#     parser.add_argument('location', type=str)
+#     args = parser.parse_args()
+#     location = args.get("location")
+#     loca_code = 0
+#     if location in country_code:
+#         loca_code = country_code[location]
+#     return_list=[]
+#     #open trpadvisor dataset and processing data
+#     with open(resdir + tripadvisor_fname) as f:
+#         f_csv = csv.DictReader(f)
+#         for row in f_csv :
+#             if row['Country'] == location:
+#                 return_list.append(row)
+#     #return if there is no relate data in zomato dataset
+#     if loca_code == 0:
+#         return jsonify(return_list), 200
+#     #open zomato dataset and processing data
+#     try:
+#         with open(resdir + zomato_fname, 'r', encoding='ISO-8859-1') as f1:
+#             fi_csv = csv.DictReader(f1)
+#             for row in fi_csv:
+#                 #print(loca_code,row['Country Code'])
+#                 if int(row['Country Code']) == loca_code:
+#                     return_list.append(row)
 
-        return jsonify(return_list), 200
-    except IOError:
-        pass
+#         return jsonify(return_list), 200
+#     except IOError:
+#         pass
 
 @app.after_request
 def add_header(response):
@@ -497,5 +502,5 @@ def top_restaurants_types(lat, long):
     return jsonify(RestaurantAnalytics.top_restaurant_types(restaurant_list), 200)
 
 if __name__ == '__main__':
-    read_file()
+    # read_file()
     app.run()
