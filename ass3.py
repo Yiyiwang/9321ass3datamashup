@@ -381,17 +381,25 @@ def get_rests_by_lat_and_lon(lat, lon):
         sources = entity["sources"]
         if len(sources) > 1:
             votes_total = 0
-            aggregate_rating = 0
             for s in sources:
+                if "rating" not in s.keys():
+                    continue
                 rating = s["rating"]
                 votes_total += rating["votes"]
+
+            if not votes_total:
+                continue
+
+            aggregate_rating = 0
             for s in sources:
+                if "rating" not in s.keys():
+                    continue
                 rating = s["rating"]
                 votes_weight = rating["votes"] / votes_total
                 votes_rating = rating["aggregate_rating"] * votes_weight
                 aggregate_rating += votes_rating
             entity["aggregate_rating"] = round(aggregate_rating, 1)
-        else:
+        elif "rating" in sources[0].keys():
             entity["aggregate_rating"] = sources[0]["rating"]["aggregate_rating"]
 
     return dumps(d), 200
