@@ -1,23 +1,26 @@
-body,h1,h2,h3,h4,h5,h6 {font-family: "Lato", sans-serif;}
-
+h1,h2,h3,h4,h5,h6 {font-family: "Lato", sans-serif;}
+/* Optional: Makes the sample page fill the window. */
 body, html {
     height: 100%;
     color: #777;
     line-height: 1.8;
+    margin: 0;
+    padding: 0;
+    font-family: "Lato", sans-serif;
 }
 
 /* Create a Parallax Effect */
- .bgimg-1{
-     background-attachment: fixed;
-     background-position: center;
-     background-repeat: no-repeat;
-     background-size: cover;
- }
+.bgimg-1{
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
 
 /* First image (Logo. Full height) */
 .bgimg-1 {
-    background-image: url('https://27ldk4j1esh2tto962ds2vk1-wpengine.netdna-ssl.com/wp-content/uploads/Matterhorn.jpg');
-    min-height: 100%;
+    background-image: url("resources/background.jpg");
+    min-height: 200%;
 }
 
 .w3-wide {letter-spacing: 10px;}
@@ -38,12 +41,7 @@ div.listitem {
 #map {
     height: 400px;
 }
-/* Optional: Makes the sample page fill the window. */
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
+
 #description {
     font-family: Roboto;
     font-size: 15px;
@@ -110,4 +108,33 @@ html, body {
     font-size: 25px;
     font-weight: 500;
     padding: 6px 12px;
+}
+
+#side-container {
+    position: relative;
+    overflow: hidden;
+    float: right;
+    margin: 100px 12px;
+    padding: 0 11px 0 13px;
+    width: 20%;
+    display: block;
+}
+
+#top-restaurant-type-loader {
+    margin-top: 100px;
+    padding: 5px 5px 5px 5px;
+    width: 90%;
+    height: 100%;
+    background-color: #fff;
+    font-family: Roboto;
+    font-size: 20px;
+    font-weight: 300;
+    display: none;
+}
+
+/* Turn off parallax scrolling for tablets and phones */
+@media only screen and (max-device-width: 1024px) {
+    .bgimg-1, .bgimg-2, .bgimg-3 {
+        background-attachment: scroll;
+    }
 }

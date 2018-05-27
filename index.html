@@ -8,132 +8,91 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">
 <link rel="stylesheet" type="text/css" href="style.css">
-<style>
-body,h1,h2,h3,h4,h5,h6 {font-family: "Lato", sans-serif;}
-body, html {
-    height: 100%;
-    color: #777;
-    line-height: 1.8;
-}
-
-/* Create a Parallax Effect */
-.bgimg-1, .bgimg-2, .bgimg-3 {
-    background-attachment: fixed;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-}
-
-/* First image (Logo. Full height) */
-.bgimg-1 {
-    background-image: url("resources/background.jpg");
-    min-height: 200%;
-}
-
-
-.w3-wide {letter-spacing: 10px;}
-.w3-hover-opacity {cursor: pointer;}
-
-/* Turn off parallax scrolling for tablets and phones */
-@media only screen and (max-device-width: 1024px) {
-    .bgimg-1, .bgimg-2, .bgimg-3 {
-        background-attachment: scroll;
-    }
-}
-</style>
 <body>
 
 <!-- Navbar (sit on top) -->
 <div class="w3-top">
-  <div class="w3-bar" id="myNavbar" style="background-color: #777777; opacity: 0.5">
-    <a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right" href="javascript:void(0);" onclick="toggleFunction()" title="Toggle Navigation Menu">
-      <i class="fa fa-bars"></i>
-    </a>
-    <a href="#home" class="w3-bar-item w3-button" style="color: white">HOME</a>
-  </div>
+    <div class="w3-bar" id="myNavbar" style="background-color: #777777; opacity: 0.5">
+        <a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right" href="javascript:void(0);"
+           onclick="toggleFunction()" title="Toggle Navigation Menu">
+            <i class="fa fa-bars"></i>
+        </a>
+        <a href="#home" class="w3-bar-item w3-button" style="color: white">HOME</a>
+    </div>
 </div>
 
 <!-- First Parallax Image with Logo Text -->
 <div class="bgimg-1 w3-display-container w3-opacity-min" id="home">
 
-  <div class="w3-display-topmiddle" style="white-space:nowrap; width: 70%; padding-top: 100px">
+    <div class="w3-display-topmiddle" style="white-space:nowrap; width: 50%; padding-top: 100px">
 
-      <div class="ui middle center aligned container" style="margin: auto; width: 70%">
+        <div class="ui middle center aligned container" style="margin: auto;">
 
-        <!--<div class="pac-card" id="pac-card" style="display: inline-block">
+            <div class="pac-card" id="pac-card" style="position:fixed">
+                <div>
+                    <div id="title">
+                        Enter your location
+                    </div>
+                    <div id="strict-bounds-selector" class="pac-controls">
+                        <input type="checkbox" id="show_multi_source" value="">
+                        <label for="show_multi_source">Only show restaurants with more then 1 source</label>
+                    </div>
+                </div>
+                <div id="pac-container">
+                    <input id="pac-input" type="text"
+                           placeholder="Enter a location">
+                </div>
+            </div>
+            <div style="width: auto; position: fixed" id="map"></div>
 
-              <div id="pac-container" style="margin-bottom: 10px" class="ui large icon input loading">
-                  <input id="pac-input" type="text" placeholder="Location...">
-              </div>
+            <div id="infowindow-content">
+                <img src="" width="16" height="16" id="place-icon">
+                <span id="place-name" class="title"></span><br>
+                <span id="place-address"></span>
+            </div>
 
-          </div>
+        </div>
 
-          <button
-              class="ui middle centered large button"
-              style="margin-left: -5px; display: inline-block"
-              onclick="handleLocationSearch()">
-              Search
-          </button>-->
+        <div class="ui center aligned container" style="margin: auto;">
 
-          <div class="pac-card" id="pac-card" style="position:fixed">
-              <div>
-                  <div id="title">
-                      Enter your location
-                  </div>
-                  <div id="strict-bounds-selector" class="pac-controls">
-                      <input type="checkbox" id="show_multi_source" value="">
-                      <label for="show_multi_source">Only show restaurants with more then 1 source</label>
-                  </div>
-              </div>
-              <div id="pac-container">
-                  <input id="pac-input" type="text"
-                         placeholder="Enter a location">
-              </div>
-          </div>
-          <div style="width: auto; position: fixed" id="map"></div>
+            <div id="loader" style="margin-top: 30px;" class="ui big disabled centered inline loader"></div>
 
-          <div id="infowindow-content">
-              <img src="" width="16" height="16" id="place-icon">
-              <span id="place-name"  class="title"></span><br>
-              <span id="place-address"></span>
-          </div>
+            <div id="locationResponse" class="ui middle aligned scrolling selection list"
+                 style="max-height:500px;overflow-y: scroll; background-color:gray; margin-top: 10px; display: inline-grid">
 
-      </div>
+            </div>
+        </div>
 
-      <div class="ui center aligned container" style="margin: auto; width: 50%;">
-
-          <div id="loader" style="margin-top: 30px;" class="ui big disabled centered inline loader"></div>
-
-          <div id="locationResponse" class="ui middle aligned scrolling selection list" style="max-height:500px;overflow-y: scroll; background-color:gray; width: 100%; margin-top: 10px; display: inline-grid" >
-
-          </div>
-      </div>
-
-  </div>
+    </div>
+    <div id="side-container">
+        <div id="top-restaurant-type-loader"></div>
+    </div>
 </div>
 
 
 <!-- Footer -->
 <footer class="w3-center w3-black w3-padding-64 w3-opacity w3-hover-opacity-off">
-  <div class="w3-xlarge w3-section">
-    <i class="fa fa-tripadvisor w3-hover-opacity"></i>
-    <i class="fa fa-google w3-hover-opacity"></i>
-  </div>
+    <div class="w3-xlarge w3-section">
+        <i class="fa fa-tripadvisor w3-hover-opacity"></i>
+        <i class="fa fa-google w3-hover-opacity"></i>
+    </div>
 </footer>
- 
-<!-- Add Google Maps -->
 
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDygBTN4PDnl0aWHkvwSTlknrqlMQibXA8&libraries=places"></script>
-<script src="script.js"></script>
 
+<!-- scripts -->
 <script
-    src="https://code.jquery.com/jquery-3.1.1.min.js"
-    integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
-    crossorigin="anonymous"
+        src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+        crossorigin="anonymous"
 ></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
 <script src="semantic/dist/semantic.min.js"></script>
 
+<!-- Add Google Maps -->
+<script type="text/javascript"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDygBTN4PDnl0aWHkvwSTlknrqlMQibXA8&libraries=places"></script>
+<script type="text/javascript" src="script.js"></script>
 <!--
 To use this code on your website, get a free API key from Google.
 Read more at: https://www.w3schools.com/graphics/google_maps_basic.asp

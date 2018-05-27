@@ -1,5 +1,11 @@
+$(document).ready(function(){
+    initMap();
+});
+
 
 var autocomplete = null;
+var host = "http://127.0.0.1";
+var port = ":5000";
 
 function initMap() {
     var map = new google.maps.Map(document.getElementById('map'), {
@@ -93,28 +99,8 @@ function handleSearch() {
     console.log(loc.lat());
     console.log(loc.lng());
 
-    var host = "http://127.0.0.1";
-    var port = ":5000";
-    var geocords_params = loc.lat().toString() + "/"  + loc.lng().toString();
-
-    // get top restaurant type by location
-    /*$.ajax({
-        url: host + port + "/analytics/top_restaurant_types/"
-            + geocords_params
-        , type: "GET"
-        , success: function(response){
-            alert(
-                "Fancy " + response[0][0] + "?\n"
-                + "It's featured in " + response[0][1] + " restaurants in this area."
-            );
-            $.each(response, function(i, v){
-                console.log(v)
-            });
-        }
-        , error: function(error){
-            console.log(error)
-        }
-    });*/
+    // get top restaurant type by location and displays in right side popup
+    topRestaurantType(loc);
 
     url_string = "http://127.0.0.1:5000/restaurants/" +
         loc.lat().toString() + "/" +
@@ -255,10 +241,35 @@ function populate_UI(data) {
     }
 }
 
+function topRestaurantType(loc) {
+
+    var geocords_params = loc.lat().toString() + "/"  + loc.lng().toString();
+
+    $.ajax({
+        url: host + port + "/analytics/top_restaurant_types/"
+            + geocords_params
+        , type: "GET"
+        , success: function(response){
+            $("#top-restaurant-type-loader")
+                .css("display", "block")
+                .html(
+                    "Fancy " + "<i><b>" + response[0][0] + "</b></i>" + "?\n"
+                    + "It's featured in " + "<b>" + response[0][1] + "</b>" + " restaurants in this area."
+                );
+            $.each(response, function(i, v){
+                console.log(v)
+            });
+        }
+        , error: function(error){
+            console.log(error)
+        }
+    });
+}
+
 function htmlToElements(html) {
     var template = document.createElement('template');
     template.innerHTML = html;
     return template.content.childNodes;
 }
 
-initMap();
+//initMap();
